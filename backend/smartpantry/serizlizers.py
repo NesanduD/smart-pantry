@@ -19,6 +19,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         if attrs["password1"] != attrs["password2"]:
             raise serializers.ValidationError("Passwords do not match.")
+        return attrs
 
         password = attrs.get("password1", "")
         if len(password) < 8:

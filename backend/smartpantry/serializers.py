@@ -1,4 +1,4 @@
-from .models import CustomUser
+from .models import CustomUser, Ingredient
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 
@@ -42,3 +42,9 @@ class UserLoginSerializer(serializers.Serializer):
         if user and user.is_active:
             return user 
         raise serializers.ValidationError("Incorrect credentials provided.")
+
+class IngredientSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ingredient
+        fields = ['id', 'user', 'name', 'quantity', 'expiration_date', 'created_at']
+        read_only_fields = ['id', 'user', 'created_at']

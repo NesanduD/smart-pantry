@@ -11,3 +11,17 @@ class CustomUser(AbstractUser):
 
     def __str__(self) -> str:
         return self.email
+    
+
+class Ingredient(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    name = models.CharField(max_length=100)
+    quantity = models.FloatField()
+    expiration_date = models.DateField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+    
+
+

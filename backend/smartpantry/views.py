@@ -6,34 +6,71 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import generics, permissions
-from rest_framework.views import APIView
-from rest_framework.parsers import MultiPartParser, FormParser
-import os
-from rest_framework.decorators import api_view
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from rest_framework import status
-from .services.google_gemini_service import identify_ingredients_from_url
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
+import json
+import os
 
+# --- CORRECTED IMPORTS ---
+from .services.google_gemini_service import identify_ingredients, suggest_recipes_from_ingredients
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def scan_ingredient_gemini(request):
     """
-    Accepts an image URL from the frontend and uses Google Gemini to identify ingredients.
+    Accepts an image FILE, saves it temporarily, and identifies ingredients.
     """
-    image_url = request.data.get("image_url")
-    if not image_url:
-        return Response({"error": "Image URL required"}, status=status.HTTP_400_BAD_REQUEST)
+    image_file = request.FILES.get('image')
+    
+    if not image_file:
+        return Response({"error": "Image file required"}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Save file temporarily to disk so we can open it
+    path = default_storage.save(f"tmp/{image_file.name}", ContentFile(image_file.read()))
+    full_path = default_storage.path(path)
 
     try:
-        results = identify_ingredients_from_url(image_url)
-        return Response({"predictions": results})
+        # Call the service function
+        results = identify_ingredients(full_path)
+        
+        # Cleanup
+        if os.path.exists(full_path):
+            os.remove(full_path)
+        
+        return Response({"ingredients": results})
     except Exception as e:
+        # Cleanup on error
+        if os.path.exists(full_path):
+            os.remove(full_path)
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def suggest_recipes(request):
+    """
+    Takes a list of ingredients and returns recipes.
+    """
+    # Fix: Check if data is already a list, otherwise try to get the 'ingredients' key
+    if isinstance(request.data, list):
+        ingredients = request.data
+    else:
+        ingredients = request.data.get("ingredients", [])
+
+    if not ingredients:
+        return Response({"error": "Ingredients list required"}, status=status.HTTP_400_BAD_REQUEST)
+
+    # ... rest of your code ...
+    recipes_json_str = suggest_recipes_from_ingredients(ingredients)
     
-# Create your views here.
+    try:
+        data = json.loads(recipes_json_str)
+    except:
+        data = []
+
+    return Response({"recipes": data})
+
+# ... (Keep your UserRegistrationAPIView, UserLoginAPIView, etc. below) ...
 class UserRegistrationAPIView(GenericAPIView):
     permission_classes = (AllowAny,)
     serializer_class = UserRegistrationSerializer
@@ -85,12 +122,9 @@ class IngredientListCreateView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
-
 class IngredientDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = IngredientSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         return Ingredient.objects.filter(user=self.request.user)
-    
-

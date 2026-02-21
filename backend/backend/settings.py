@@ -31,6 +31,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 # Application definition
 
 INSTALLED_APPS = [
+    'corsheaders',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -44,6 +45,8 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -150,3 +153,12 @@ SIMPLE_JWT = {
 
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
+
+# Allow requests from your Vercel frontend
+CORS_ALLOWED_ORIGINS = [
+    "https://smart-pantry-rho.vercel.app",
+    "http://localhost:5173", # For local testing
+]
+
+# Alternatively, for quick testing only, you can use:
+# CORS_ALLOW_ALL_ORIGINS = True

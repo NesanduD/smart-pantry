@@ -18,7 +18,7 @@ def suggest_recipes_from_ingredients(ingredients_list):
     [
         {{
             "title": "Recipe Name",
-            "ingredients_needed": ["item1", "item2"],
+            "ingredients_needed": ["item1", "item2"]
             "instructions": "Step 1..."
         }}
     ]

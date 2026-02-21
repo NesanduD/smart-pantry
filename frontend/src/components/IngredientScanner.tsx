@@ -1,6 +1,7 @@
-import { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import api from '../../api';
 
+// 1. Interfaces matching your backend response
 interface Recipe {
   title: string;
   instructions: string;
@@ -16,69 +17,18 @@ const IngredientScanner = () => {
   const [preview, setPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [results, setResults] = useState<ScanResults | null>(null);
-  
-  // New State for Camera
-  const [isCameraActive, setIsCameraActive] = useState<boolean>(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Turn on the webcam
-  const startCamera = async () => {
-    setPreview(null); // Clear any old pictures
-    setImage(null);
-    try {
-      // Ask the browser for camera access
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' } // Prefers back camera on mobile
-      });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        setIsCameraActive(true);
-      }
-    } catch (err) {
-      console.error("Error accessing camera:", err);
-      alert("Could not access the camera. Please allow camera permissions in your browser.");
+  // 2. Handles both taking a live photo AND uploading from the gallery
+  const handleImageCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImage(file);
+      setPreview(URL.createObjectURL(file));
+      setResults(null); // Clear old results when a new photo is taken
     }
   };
 
-  // Turn off the webcam
-  const stopCamera = () => {
-    if (videoRef.current && videoRef.current.srcObject) {
-      const stream = videoRef.current.srcObject as MediaStream;
-      const tracks = stream.getTracks();
-      tracks.forEach(track => track.stop()); // Stop the hardware camera
-      videoRef.current.srcObject = null;
-    }
-    setIsCameraActive(false);
-  };
-
-  // Turn off camera if the user leaves the page
-  useEffect(() => {
-    return () => stopCamera();
-  }, []);
-
-  // Take a picture from the live video feed
-  const takePicture = () => {
-    if (videoRef.current && canvasRef.current) {
-      const context = canvasRef.current.getContext('2d');
-      // Set canvas size to match video
-      canvasRef.current.width = videoRef.current.videoWidth;
-      canvasRef.current.height = videoRef.current.videoHeight;
-      // Draw the current video frame onto the canvas
-      context?.drawImage(videoRef.current, 0, 0);
-
-      // Convert the canvas image into a File object we can send to Django
-      canvasRef.current.toBlob((blob) => {
-        if (blob) {
-          const file = new File([blob], "camera-capture.jpg", { type: "image/jpeg" });
-          setImage(file);
-          setPreview(URL.createObjectURL(file));
-          stopCamera(); // Turn off the live feed once we have the picture
-        }
-      }, 'image/jpeg');
-    }
-  };
-
+  // 3. Sends the image to your Django backend
   const handleScan = async () => {
     if (!image) return;
     setLoading(true);
@@ -87,13 +37,15 @@ const IngredientScanner = () => {
     formData.append('image', image);
 
     try {
+      // Hitting the path('ingredients/scan/', ...) you set up in urls.py
       const res = await api.post<ScanResults>('ingredients/scan/', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       setResults(res.data);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Scan error", err);
-      alert("Failed to scan image. Make sure you are logged in!");
+      const errorMsg = err.response?.data?.error || "Failed to scan image. Make sure you are logged in.";
+      alert(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -105,47 +57,31 @@ const IngredientScanner = () => {
       
       <div className="flex flex-col items-center gap-6">
         
-        {/* Camera Controls */}
-        <div className="flex gap-4">
-          {!isCameraActive && !preview && (
-            <button 
-              onClick={startCamera}
-              className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded font-bold transition"
-            >
-              📷 Start Camera
-            </button>
-          )}
-        </div>
-
-        {/* Live Video Feed */}
-        <div className={`relative ${isCameraActive ? 'block' : 'hidden'}`}>
-          <video 
-            ref={videoRef} 
-            autoPlay 
-            playsInline 
-            className="w-full max-w-md rounded-lg shadow-sm border border-gray-300"
-          ></video>
-          <button 
-            onClick={takePicture}
-            className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-white text-blue-600 px-6 py-2 rounded-full font-bold shadow-lg hover:bg-gray-100 border-2 border-blue-500"
-          >
-            Take Photo
-          </button>
-        </div>
-
-        {/* Hidden Canvas used to process the image */}
-        <canvas ref={canvasRef} className="hidden"></canvas>
-
-        {/* Display the captured photo */}
-        {preview && (
-          <div className="flex flex-col items-center gap-4">
-            <img src={preview} alt="Captured" className="w-full max-w-md rounded-lg shadow-sm border border-gray-300" />
-            <button 
-              onClick={() => { setPreview(null); startCamera(); }}
-              className="text-sm text-gray-500 hover:text-gray-700 underline"
-            >
+        {/* The Native Camera / Upload Button */}
+        {!preview ? (
+          <label className="flex flex-col items-center justify-center w-full max-w-md h-64 border-4 border-blue-200 border-dashed rounded-xl cursor-pointer bg-blue-50 hover:bg-blue-100 transition shadow-sm">
+            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+              <span className="text-6xl mb-4">📱</span>
+              <p className="mb-2 text-lg text-blue-800 font-bold">Tap to Open Camera</p>
+              <p className="text-sm text-blue-600 font-semibold">or choose from gallery</p>
+            </div>
+            {/* The magic line that handles mobile cameras flawlessly */}
+            <input 
+              type="file" 
+              accept="image/*" 
+              capture="environment" 
+              className="hidden" 
+              onChange={handleImageCapture} 
+            />
+          </label>
+        ) : (
+          /* Image Preview State */
+          <div className="flex flex-col items-center gap-4 w-full max-w-md">
+            <img src={preview} alt="Captured" className="w-full rounded-xl shadow-md border-2 border-gray-200 object-cover" />
+            <label className="text-sm text-blue-500 hover:text-blue-700 underline cursor-pointer font-semibold">
               Retake Photo
-            </button>
+              <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleImageCapture} />
+            </label>
           </div>
         )}
 
@@ -153,32 +89,50 @@ const IngredientScanner = () => {
         <button 
           onClick={handleScan} 
           disabled={loading || !image}
-          className={`px-8 py-3 rounded-full text-white font-bold transition w-full max-w-md mt-4 ${
-            loading || !image ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600 shadow-md'
+          className={`px-8 py-4 rounded-xl text-white font-extrabold text-lg transition w-full max-w-md mt-2 ${
+            loading || !image ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600 shadow-lg hover:shadow-xl transform hover:-translate-y-1'
           }`}
         >
-          {loading ? 'Analyzing with AI...' : 'Scan & Get Recipes'}
+          {loading ? '🧠 Gemini is Analyzing...' : '✨ Scan & Get Recipes ✨'}
         </button>
       </div>
 
+      
+
       {/* Results Section */}
       {results && (
-        <div className="mt-12 border-t pt-8">
-          <h3 className="text-xl font-bold mb-2">✅ Detected Ingredients:</h3>
-          <p className="text-green-600 text-lg mb-8 bg-green-50 p-4 rounded border border-green-200">
-            {results.detected_ingredients?.join(', ') || "None"}
-          </p>
+        <div className="mt-12 border-t pt-8 animate-fade-in-up">
+          <h3 className="text-xl font-bold mb-3 flex items-center gap-2">
+            ✅ Detected Ingredients
+          </h3>
+          <div className="flex flex-wrap gap-2 mb-8 bg-green-50 p-5 rounded-lg border border-green-200 shadow-inner">
+            {results.detected_ingredients?.length > 0 ? (
+              results.detected_ingredients.map((item, idx) => (
+                <span key={idx} className="bg-green-200 text-green-900 px-4 py-2 rounded-full text-sm font-bold capitalize shadow-sm">
+                  {item}
+                </span>
+              ))
+            ) : (
+              <p className="text-gray-600">No ingredients clearly detected. Try a better angle!</p>
+            )}
+          </div>
           
-          <h3 className="text-2xl font-bold mb-6">🍽️ Suggested Recipes</h3>
+          <h3 className="text-2xl font-bold mb-6 flex items-center gap-2">
+            🍽️ Suggested Recipes
+          </h3>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {results.suggested_recipes?.map((recipe, idx) => (
-              <div key={idx} className="bg-gray-50 border rounded-xl shadow-sm p-5 hover:shadow-md transition">
-                <h4 className="font-bold text-lg mb-3 text-gray-800">{recipe.title}</h4>
-                <p className="text-gray-600 text-sm whitespace-pre-line leading-relaxed">
-                  {recipe.instructions.substring(0, 150)}...
-                </p>
-              </div>
-            ))}
+            {results.suggested_recipes?.length > 0 ? (
+              results.suggested_recipes.map((recipe, idx) => (
+                <div key={idx} className="bg-white border-2 border-gray-100 rounded-xl shadow-sm hover:shadow-lg transition duration-300 p-6 flex flex-col h-full">
+                  <h4 className="font-bold text-xl mb-4 text-gray-800 border-b pb-2">{recipe.title}</h4>
+                  <p className="text-gray-600 text-sm whitespace-pre-line leading-relaxed flex-grow">
+                    {recipe.instructions}
+                  </p>
+                </div>
+              ))
+            ) : (
+              <p className="text-gray-500 italic col-span-full text-center py-8">No recipes found for these ingredients.</p>
+            )}
           </div>
         </div>
       )}

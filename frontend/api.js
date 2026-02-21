@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://127.0.0.1:8000/api/', // This points to your Django server
+  baseURL: 'https://smart-pantry-zqj4.onrender.com/api/', // This points to your Django server
 });
 
 // Automatically add the token to every request

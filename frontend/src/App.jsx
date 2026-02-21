@@ -3,6 +3,7 @@ import Login from './components/Login';
 import IngredientScanner from './components/IngredientScanner';
 import PantryList from './components/PantryList';
 import Navbar from './components/Navbar';
+import Register from './components/Register';
 
 function App() {
   // Check if we have a token to see if the user is logged in
@@ -28,6 +29,10 @@ function App() {
             <Route 
               path="/pantry" 
               element={isAuthenticated ? <PantryList /> : <Navigate to="/login" />} 
+            />
+            <Route
+             path="/register"
+              element={<Register />} 
             />
 
             {/* Default Route: Catch-all that redirects based on login status */}

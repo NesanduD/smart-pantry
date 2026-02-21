@@ -6,7 +6,8 @@ from .views import (
     IngredientListCreateView,
     IngredientDetailView,
     scan_ingredient_gemini,
-    suggest_recipes
+    suggest_recipes,
+    RegisterView
 )
 from rest_framework_simplejwt.views import TokenRefreshView
 
@@ -20,4 +21,5 @@ urlpatterns = [
     path('ingredients/scan/', scan_ingredient_gemini),
     path("scan-gemini/", scan_ingredient_gemini, name="scan-ingredient-gemini"),
     path('recipes/suggest/', suggest_recipes, name='suggest-recipes'),
+    path('register/', RegisterView.as_view(), name='register'),
 ]

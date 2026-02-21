@@ -15,10 +15,11 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 
 # Allow Render and Vercel to talk to each other
 ALLOWED_HOSTS = [
-    'smart-pantry-zqj4.onrender.com', 
+    'smart-pantry-zqj4.onrender.com',           # Your Render Backend
+    'smart-pantry-rho.vercel.app',              # Your Main Vercel Domain
+    'smart-pantry-clmvataoq-nesanduds-projects.vercel.app', # Your specific deployment
     'localhost', 
-    '127.0.0.1',
-    'smart-pantry-rho.vercel.app'
+    '127.0.0.1'
 ]
 
 # This allows your Vercel frontend to talk to your Render backend

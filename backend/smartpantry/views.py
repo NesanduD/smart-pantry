@@ -23,6 +23,10 @@ from .services.google_gemini_service import identify_ingredients, suggest_recipe
 @permission_classes([IsAuthenticated])
 def scan_ingredient_gemini(request):
     image_file = request.FILES.get('image')
+    
+    # Grab the model choice from the frontend, default to flash if it's missing
+    selected_model = request.data.get('model', 'gemini-2.0-flash')
+    
     if not image_file:
         return Response({"error": "No image provided"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -30,7 +34,8 @@ def scan_ingredient_gemini(request):
     full_path = default_storage.path(path)
 
     try:
-        raw_text = identify_ingredients(full_path)
+        # Pass selected_model down to the AI service
+        raw_text = identify_ingredients(full_path, model_name=selected_model)
         detected_names = [name.strip().lower() for name in raw_text.split(',') if name.strip()]
 
         for name in detected_names:
@@ -40,7 +45,9 @@ def scan_ingredient_gemini(request):
                 defaults={'quantity': 1, 'expiration_date': '2026-12-31'}
             )
 
-        recipes_json = suggest_recipes_from_ingredients(detected_names)
+        # Pass selected_model down for recipe generation too
+        recipes_json = suggest_recipes_from_ingredients(detected_names, model_name=selected_model)
+        
         try:
             recipes_data = json.loads(recipes_json)
         except:
@@ -65,10 +72,15 @@ def scan_ingredient_gemini(request):
 @permission_classes([IsAuthenticated])
 def suggest_recipes(request):
     ingredients = request.data.get("ingredients", [])
+    
+    # Grab the model choice from the frontend
+    selected_model = request.data.get('model', 'gemini-2.0-flash')
+    
     if not ingredients:
         return Response({"error": "Ingredients list required"}, status=status.HTTP_400_BAD_REQUEST)
 
-    recipes_json_str = suggest_recipes_from_ingredients(ingredients)
+    # Pass the model down
+    recipes_json_str = suggest_recipes_from_ingredients(ingredients, model_name=selected_model)
     
     try:
         data = json.loads(recipes_json_str)

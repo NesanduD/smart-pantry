@@ -94,19 +94,7 @@ class UserRegistrationAPIView(GenericAPIView):
         }
         return Response(data, status=status.HTTP_201_CREATED)
 
-class UserLogoutAPIView(GenericAPIView):
-    permission_classes = (IsAuthenticated,)
-
-    def post(self, request, *args, **kwargs):
-        try:
-            refresh_token = request.data.get("refresh")
-            if refresh_token:
-                token = RefreshToken(refresh_token)
-                token.blacklist()
-            return Response(status=status.HTTP_205_RESET_CONTENT)
-        except Exception as e:
-            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        
+class UserLoginAPIView(GenericAPIView):
     permission_classes = (AllowAny,)
     serializer_class = UserLoginSerializer
 
@@ -121,6 +109,19 @@ class UserLogoutAPIView(GenericAPIView):
             "access": str(token.access_token)
         }
         return Response(user_data, status=status.HTTP_200_OK)
+
+class UserLogoutAPIView(GenericAPIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request, *args, **kwargs):
+        try:
+            refresh_token = request.data.get("refresh")
+            if refresh_token:
+                token = RefreshToken(refresh_token)
+                token.blacklist()
+            return Response(status=status.HTTP_205_RESET_CONTENT)
+        except Exception as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 # --- PANTRY LOGIC ---
 class IngredientListCreateView(generics.ListCreateAPIView):

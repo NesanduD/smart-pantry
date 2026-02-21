@@ -94,7 +94,19 @@ class UserRegistrationAPIView(GenericAPIView):
         }
         return Response(data, status=status.HTTP_201_CREATED)
 
-class UserLoginAPIView(GenericAPIView):
+class UserLogoutAPIView(GenericAPIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request, *args, **kwargs):
+        try:
+            refresh_token = request.data.get("refresh")
+            if refresh_token:
+                token = RefreshToken(refresh_token)
+                token.blacklist()
+            return Response(status=status.HTTP_205_RESET_CONTENT)
+        except Exception as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
     permission_classes = (AllowAny,)
     serializer_class = UserLoginSerializer
 

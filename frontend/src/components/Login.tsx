@@ -3,24 +3,25 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../api';
 
 const Login = () => {
-  const [creds, setCreds] = useState({ email: '', password: '' });
+  // 1. Changed 'email' to 'username' to match Django's default
+  const [creds, setCreds] = useState({ username: '', password: '' });
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
-    e.preventDefault(); // Prevents the page from refreshing
+    e.preventDefault();
     try {
-      // Send credentials to your Django backend
-      const res = await api.post('login/', creds);
+      // 2. Changed endpoint to 'token/' to match your urls.py
+      const res = await api.post('token/', creds);
       
-      // Save the tokens so 'api.js' can use them
-      localStorage.setItem('access_token', res.data.tokens.access);
-      localStorage.setItem('refresh_token', res.data.tokens.refresh);
+      // 3. SimpleJWT returns tokens directly in res.data
+      localStorage.setItem('access_token', res.data.access);
+      localStorage.setItem('refresh_token', res.data.refresh);
       
       alert("Login Successful!");
-      navigate('/scan'); // Send the user to the scanner page
+      navigate('/scan'); 
     } catch (err) {
       console.error(err);
-      alert("Login Failed. Check your username and password.");
+      alert("Login Failed. Check your credentials.");
     }
   };
 
@@ -32,8 +33,8 @@ const Login = () => {
         <input 
           className="w-full p-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-green-400"
           type="text" 
-          placeholder="email" 
-          onChange={e => setCreds({...creds, email: e.target.value})} 
+          placeholder="Username" // Changed placeholder
+          onChange={e => setCreds({...creds, username: e.target.value})} // Matches state key
           required
         />
         

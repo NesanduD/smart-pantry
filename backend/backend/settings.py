@@ -7,7 +7,11 @@ import os
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 # Allow Render and Vercel to talk to each other
-ALLOWED_HOSTS = ['.onrender.com', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = [
+    'smart-pantry-zqj4.onrender.com', 
+    'localhost', 
+    '127.0.0.1'
+]
 
 # This allows your Vercel frontend to talk to your Render backend
 CORS_ALLOW_ALL_ORIGINS = True

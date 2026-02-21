@@ -1,6 +1,16 @@
-import os
 from dotenv import load_dotenv
 from pathlib import Path
+
+import os
+
+# Switch DEBUG to False for production
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
+
+# Allow Render and Vercel to talk to each other
+ALLOWED_HOSTS = ['.onrender.com', 'localhost', '127.0.0.1']
+
+# This allows your Vercel frontend to talk to your Render backend
+CORS_ALLOW_ALL_ORIGINS = True
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -175,3 +185,19 @@ SIMPLE_JWT = {
 
 load_dotenv()
 CORS_ALLOW_ALL_ORIGINS = True
+
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    # How long the primary access token lasts
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=1), 
+    
+    # How long the refresh token lasts (used to get new access tokens)
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    
+    # Optional: Automatically rotate refresh tokens for better security
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+
+    'AUTH_HEADER_TYPES': ('Bearer',),
+}

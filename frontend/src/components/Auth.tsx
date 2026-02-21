@@ -11,35 +11,63 @@ const Auth = () => {
     e.preventDefault();
     try {
       if (isLogin) {
-        // Updated to hit your /api/login/ endpoint specifically
+        // Login Request
         const res = await api.post('login/', { 
           username: creds.username, 
           password: creds.password 
         });
         
-        // Your backend returns tokens nested in a "tokens" object
         localStorage.setItem('access_token', res.data.tokens.access);
         localStorage.setItem('refresh_token', res.data.tokens.refresh);
         
         alert("Welcome back!");
+        navigate('/scan'); // Move navigation here so it only triggers on success
+        
       } else {
-        // Matches UserRegistrationSerializer: sends password to both password1 and password2
+        // Registration Request
         await api.post('register/', { 
             username: creds.username, 
             email: creds.email, 
             password1: creds.password, 
             password2: creds.password 
         });
+        
         alert("Account created! Now please log in.");
         setIsLogin(true); 
-        return;
       }
-      navigate('/scan'); 
     } catch (err: any) {
-      console.error(err);
-      // Detailed error alert to help you debug during development
-      const errorMsg = err.response?.data?.detail || "Authentication failed. Check your details.";
-      alert(errorMsg);
+      console.error("Auth error:", err);
+
+      // --- SMART ERROR PARSING ---
+      if (err.response && err.response.data) {
+        const errorData = err.response.data;
+
+        // 1. Check for standard 'detail' error (Common in Logins)
+        if (errorData.detail) {
+          alert(`Failed:\n\n${errorData.detail}`);
+          return;
+        }
+
+        // 2. Check for form validation errors (Common in Registration)
+        if (typeof errorData === 'object') {
+          const formattedErrors = Object.entries(errorData)
+            .map(([field, messages]) => {
+              // Convert arrays to strings if necessary
+              const errorText = Array.isArray(messages) ? messages.join(' ') : String(messages);
+              // Capitalize the field name
+              const cleanField = field.charAt(0).toUpperCase() + field.slice(1);
+              return `${cleanField}: ${errorText}`;
+            })
+            .join('\n\n'); // Double line break for readability
+
+          alert(`Please fix the following issues:\n\n${formattedErrors}`);
+        } else {
+           alert(`Error: ${errorData}`);
+        }
+      } else {
+        // 3. Fallback for actual network/server crashes
+        alert("Cannot reach the server. Please check your connection.");
+      }
     }
   };
 
@@ -95,4 +123,3 @@ const Auth = () => {
 };
 
 export default Auth;
-

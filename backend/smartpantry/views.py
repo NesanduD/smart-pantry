@@ -35,7 +35,7 @@ def scan_ingredient_gemini(request):
 
     try:
         # Pass selected_model down to the AI service
-        raw_text = identify_ingredients(full_path, model_name=selected_model)
+        raw_text = identify_ingredients(full_path)
         detected_names = [name.strip().lower() for name in raw_text.split(',') if name.strip()]
 
         for name in detected_names:

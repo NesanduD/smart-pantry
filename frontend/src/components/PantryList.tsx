@@ -70,7 +70,7 @@ const generatePantryRecipes = async () => {
       
       {/* LEFT SIDE: The Pantry List */}
       <div>
-        <h2 className="text-3xl font-bold mb-6 text-gray-800">🍎 My Digital Pantry</h2>
+        <h2 className="text-3xl font-bold mb-6 text-gray-800">My Digital Pantry</h2>
         
         <div className="bg-white shadow-md rounded-lg overflow-hidden border border-gray-100">
           {loading ? (
@@ -102,7 +102,7 @@ const generatePantryRecipes = async () => {
 
       {/* RIGHT SIDE: AI Recipe Generator */}
       <div>
-        <h2 className="text-3xl font-bold mb-6 text-blue-800">✨ AI Chef</h2>
+        <h2 className="text-3xl font-bold mb-6 text-blue-800">AI Chef</h2>
         
         <div className="bg-blue-50 p-6 rounded-lg shadow-sm border border-blue-100 mb-6">
           <p className="text-gray-700 mb-4">
@@ -128,10 +128,10 @@ const generatePantryRecipes = async () => {
     onChange={(e) => setSelectedModel(e.target.value)}
     className="w-full p-2 rounded border border-blue-300 bg-white text-gray-700 focus:ring-2 focus:ring-blue-500"
   >
-    <option value="models/gemini-3-flash-preview">⚡ Gemini 3 Flash (Newest & Fastest)</option>
-    <option value="models/gemini-2.5-flash">🧠 Gemini 2.5 Flash (Reliable)</option>
-    <option value="models/gemini-2.0-flash">🚀 Gemini 2.0 Flash (Instant)</option>
-    <option value="models/gemma-3-12b-it">🤖 Gemma 3 (Open Source)</option>
+    <option value="models/gemini-3-flash-preview">Gemini 3 Flash (Newest & Fastest)</option>
+    <option value="models/gemini-2.5-flash">Gemini 2.5 Flash (Reliable)</option>
+    <option value="models/gemini-2.0-flash">Gemini 2.0 Flash (Instant)</option>
+    <option value="models/gemma-3-12b-it">Gemma 3 (Open Source)</option>
   </select>
 </div>
         {/* Display the Generated Recipes */}

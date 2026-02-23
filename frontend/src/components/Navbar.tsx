@@ -19,7 +19,7 @@ const Navbar = () => {
     <nav className="bg-slate-800 text-white p-4 shadow-md">
       <div className="container mx-auto flex justify-between items-center">
         {/* The Logo / App Name */}
-        <h1 className="text-2xl font-bold text-green-400">SmartPantry 🍎</h1>
+        <h1 className="text-2xl font-bold text-green-400">SmartPantry</h1>
         
         {/* Navigation Links */}
         <div className="flex space-x-6 items-center">

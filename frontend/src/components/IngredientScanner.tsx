@@ -193,14 +193,14 @@ const IngredientScanner = () => {
             loading || !image ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600 shadow-lg'
           }`}
         >
-          {loading ? '🧠 AI is Thinking...' : '✨ Get Recipes ✨'}
+          {loading ? '🧠 AI is Thinking...' : 'Get Recipes'}
         </button>
       </div>
 
       {/* Results Section */}
       {results && (
         <div className="mt-12 border-t pt-8">
-          <h3 className="text-xl font-bold mb-3">✅ Detected Ingredients:</h3>
+          <h3 className="text-xl font-bold mb-3">Detected Ingredients:</h3>
           <div className="flex flex-wrap gap-2 mb-8 bg-green-50 p-4 rounded-lg border border-green-200">
             {results.detected_ingredients?.map((item, idx) => (
               <span key={idx} className="bg-green-200 text-green-900 px-3 py-1 rounded-full text-sm font-bold capitalize">

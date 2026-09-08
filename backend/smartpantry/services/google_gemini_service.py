@@ -16,6 +16,7 @@ SUPPORTED_MODELS = {
     "gemini-2.5-flash",
     "gemma-4-31b-it",
 }
+MODEL_FALLBACK_ORDER = [DEFAULT_MODEL, "gemini-2.5-flash", "gemma-4-31b-it"]
 
 def resolve_model_name(model_name):
     """Keep stale frontend model selections from reaching the API."""
@@ -33,6 +34,33 @@ def resolve_model_name(model_name):
     return normalized_name if normalized_name in SUPPORTED_MODELS else DEFAULT_MODEL
 
 
+def _generate_with_fallback(contents, *, json_response=False, vision=False):
+    """Try each configured model when a model is unavailable or rate-limited."""
+    last_error = None
+    models_to_try = MODEL_FALLBACK_ORDER[:]
+    if vision:
+        models_to_try = [model for model in models_to_try if "gemma" not in model]
+
+    for model_name in models_to_try:
+        try:
+            config = None
+            if json_response and "gemma" not in model_name:
+                config = types.GenerateContentConfig(response_mime_type="application/json")
+
+            response = client.models.generate_content(
+                model=model_name,
+                contents=contents,
+                config=config,
+            )
+            print(f"!!! GEMINI MODEL: {model_name} !!!")
+            return response
+        except Exception as error:
+            last_error = error
+            print(f"!!! {model_name} FAILED, trying next model !!!: {error}")
+
+    raise last_error
+
+
 def identify_ingredients(image_path):
     """
     Opens a local image file and identifies ingredients.
@@ -41,12 +69,12 @@ def identify_ingredients(image_path):
     try:
         image = Image.open(image_path)
         
-        response = client.models.generate_content(
-            model=DEFAULT_MODEL,
+        response = _generate_with_fallback(
             contents=[
                 "Identify all food ingredients in this image. Return ONLY a comma-separated list of items (e.g. 'tomato, onion, egg'). No other text.",
-                image
-            ]
+                image,
+            ],
+            vision=True,
         )
         return response.text.strip()
     except Exception as e:
@@ -54,11 +82,10 @@ def identify_ingredients(image_path):
         raise e
 
 
-def suggest_recipes_from_ingredients(ingredients_list, model_name=DEFAULT_MODEL):
+def suggest_recipes_from_ingredients(ingredients_list):
     """
     Suggests recipes based on ingredients and ensures clean JSON output.
     """
-    active_model = resolve_model_name(model_name)
     ingredients_string = ', '.join(ingredients_list)
     
     prompt = f"""
@@ -75,16 +102,9 @@ Step-by-Step:
 """
 
     try:
-        # Prepare the config (JSON enforcement is for Gemini models only)
-        config = None
-        if "gemma" not in active_model.lower():
-            config = types.GenerateContentConfig(response_mime_type="application/json")
-
-        # Call the API
-        response = client.models.generate_content(
-            model=active_model,
+        response = _generate_with_fallback(
             contents=prompt,
-            config=config
+            json_response=True,
         )
         
         # Clean the text (remove markdown blocks if the model included them)
@@ -95,5 +115,5 @@ Step-by-Step:
         return clean_text
 
     except Exception as e:
-        print(f"!!! {active_model} ERROR !!!: {e}")
+        print(f"!!! ALL GEMINI MODELS FAILED !!!: {e}")
         return "[]"

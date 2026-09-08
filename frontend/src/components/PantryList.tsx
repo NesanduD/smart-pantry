@@ -12,6 +12,11 @@ interface Recipe {
   instructions: string;
 }
 
+interface Notice {
+  title: string;
+  message: string;
+}
+
 const PantryList = () => {
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -19,7 +24,7 @@ const PantryList = () => {
   // New state for handling AI Recipes
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loadingRecipes, setLoadingRecipes] = useState<boolean>(false);
-  const [selectedModel, setSelectedModel] = useState("models/gemini-3-flash-preview");
+  const [notice, setNotice] = useState<Notice | null>(null);
 
   const fetchPantry = async () => {
     try {
@@ -52,14 +57,15 @@ const generatePantryRecipes = async () => {
   const ingredientNames = ingredients.map(item => item.name);
 
   try {
-    // Send the model choice to the backend
     const res = await api.post('recipes/suggest/', { 
       ingredients: ingredientNames,
-      model: selectedModel 
     });
     setRecipes(res.data.recipes);
   } catch (err) {
-    alert("This model is tired! Try switching to another one.");
+    setNotice({
+      title: 'The chef is taking a moment',
+      message: 'We could not generate recipes right now. Try again in a moment.',
+    });
   } finally {
     setLoadingRecipes(false);
   }
@@ -128,19 +134,17 @@ const generatePantryRecipes = async () => {
           </button>
         </div>
 
-<div className="mb-4">
-  <label className="mb-2 block text-sm font-bold text-slate-700">Select AI chef:</label>
-  <select 
-    value={selectedModel}
-    onChange={(e) => setSelectedModel(e.target.value)}
-    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#8aaa3d] focus:ring-4 focus:ring-[#d9f36a]/40"
-  >
-    <option value="models/gemini-3-flash-preview">Gemini 3 Flash (Newest & Fastest)</option>
-    <option value="models/gemini-2.5-flash">Gemini 2.5 Flash (Reliable)</option>
-    <option value="models/gemini-2.0-flash">Gemini 2.0 Flash (Instant)</option>
-    <option value="models/gemma-3-12b-it">Gemma 3 (Open Source)</option>
-  </select>
-</div>
+        {notice && (
+          <div role="alert" className="mb-6 flex items-start gap-3 rounded-2xl border border-[#ffc4bd] bg-[#fff1ee] p-4 text-sm text-[#a83d35]">
+            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white font-bold shadow-sm">!</span>
+            <div className="min-w-0 flex-1">
+              <p className="font-bold">{notice.title}</p>
+              <p className="mt-1 leading-5">{notice.message}</p>
+            </div>
+            <button type="button" aria-label="Dismiss message" onClick={() => setNotice(null)} className="text-lg leading-none opacity-60 hover:opacity-100">×</button>
+          </div>
+        )}
+
         {/* Display the Generated Recipes */}
         {recipes.length > 0 && (
           <div className="space-y-4">

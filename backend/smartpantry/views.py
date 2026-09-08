@@ -25,7 +25,7 @@ def scan_ingredient_gemini(request):
     image_file = request.FILES.get('image')
     
     # Grab the model choice from the frontend, default to flash if it's missing
-    selected_model = request.data.get('model', 'gemini-2.0-flash')
+    selected_model = request.data.get('model', 'gemini-3.6-flash')
     
     if not image_file:
         return Response({"error": "No image provided"}, status=status.HTTP_400_BAD_REQUEST)
@@ -74,7 +74,7 @@ def suggest_recipes(request):
     ingredients = request.data.get("ingredients", [])
     
     # Grab the model choice from the frontend
-    selected_model = request.data.get('model', 'gemini-2.0-flash')
+    selected_model = request.data.get('model', 'gemini-3.6-flash')
     
     if not ingredients:
         return Response({"error": "Ingredients list required"}, status=status.HTTP_400_BAD_REQUEST)

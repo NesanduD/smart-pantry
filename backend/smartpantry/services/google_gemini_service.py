@@ -8,10 +8,9 @@ from PIL import Image
 client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
 
 # Use models available through the deployed Gemini API.
-MODEL_NAME = "gemini-2.0-flash"
+MODEL_NAME = "gemini-3.6-flash"
 SUPPORTED_MODEL_NAMES = {
-    "gemini-2.0-flash",
-    "gemini-2.5-flash",
+    "gemini-3.6-flash",
 }
 
 
@@ -39,7 +38,7 @@ def identify_ingredients(image_path):
         print(f"!!! GEMINI ERROR !!!: {e}")
         raise e
 
-def suggest_recipes_from_ingredients(ingredients_list, model_name="gemini-2.0-flash"):
+def suggest_recipes_from_ingredients(ingredients_list, model_name=MODEL_NAME):
     model_name = resolve_model_name(model_name)
     ingredients_string = ', '.join(ingredients_list)
     
@@ -96,8 +95,8 @@ Step-by-Step:
     except Exception as e:
         print(f"!!! {model_name} ERROR !!!: {e}")
         return "[]"
-    # Use the 2.0 Flash model for instant responses
-    MODEL_NAME = "gemini-2.0-flash" 
+    # Use the current Flash model for instant responses
+    MODEL_NAME = "gemini-3.6-flash"
     
     ingredients_string = ', '.join(ingredients_list)
     

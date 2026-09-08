@@ -1,92 +1,170 @@
-# Smart Pantry
+# SmartPantry
 
-AI-powered computer vision application to identify ingredients from images and suggest recipes.
+SmartPantry is a full-stack AI kitchen assistant that uses Computer Vision to identify ingredients from photos and Large Language Models (LLMs) to generate personalized, structured recipes.
 
-## Table of contents
-- About
-- Features
-- Quick start
-- Usage examples
-- Model & training
-- Evaluation
-- Privacy & security
-- Contributing
-- License
+## Live Demo
 
-## About
-Smart Pantry uses a computer vision model to detect common food ingredients from photos and returns ranked recipe suggestions based on detected items, dietary preferences, and available pantry items.
+🔗 [https://smart-pantry-rho.vercel.app/](https://smart-pantry-rho.vercel.app/)
+
 
 ## Features
-- Multi-label ingredient detection from a single image
-- Recipe recommendation engine (matching, ranking, filters)
-- Local inference or REST API mode
-- Optional dietary, allergy, and cuisine filters
-- Docker support for easy deployment
 
-## Quick start (local)
-Requirements: Python 3.8+, pip, optional CUDA for GPU.
+- **Cross-Platform AI Scanner**: Custom WebRTC integration for native-feeling live camera access on both mobile and desktop, with a secure file-upload fallback.
+- **Secure Authentication**: Robust, stateless authentication using JSON Web Tokens (JWT) with secure token blacklisting.
+- **Smart Error Parsing**: Intercepts raw backend API errors, including CORS and 400/500 responses, and translates them into clean, human-readable UI alerts.
+- **Strict JSON Enforcement**: Custom prompt-engineering logic forces strict JSON responses from the LLM, ensuring the frontend receives consistently structured and parseable data.
 
-1. Clone
-    git clone https://github.com/your-org/smart-pantry.git
-    cd smart-pantry
+## Tech Stack & Architecture
 
-2. Install
-    pip install -r requirements.txt
+### Frontend
 
-3. Download pretrained model (replace with actual URL)
-    mkdir models && curl -L -o models/ingredient_detector.pth https://example.com/models/ingredient_detector.pth
+- Deployed on: **Vercel**
+- Framework: **React + TypeScript**
+- Styling: **TailwindCSS**
+- State & Routing: **React Router**
+- HTTP Client: **Axios**
+- Hardware Integration: **WebRTC MediaDevices API**
 
-4. Run demo server
-    python app/server.py --model models/ingredient_detector.pth --port 8000
+### Backend
 
-## Usage examples
+- Deployed on: **Render**
+- Framework: **Python + Django REST Framework (DRF)**
+- Database: **SQLite**
+- Authentication: **SimpleJWT**
 
-- CLI inference
-  python scripts/infer.py --image tests/images/salad.jpg --model models/ingredient_detector.pth
+### AI & Integrations
 
-- Example JSON response (REST)
-  POST /predict
-  Input: multipart/form-data (image)
-  Output:
-  {
-     "ingredients": [{"name":"tomato","score":0.98}, {"name":"basil","score":0.87}],
-     "recipes": [
-        {"title":"Tomato Basil Pasta","match_score":0.92, "url": "..."},
-        {"title":"Bruschetta","match_score":0.80, "url": "..."}
-     ]
-  }
+- **Google GenAI SDK**: Multimodal vision processing and text generation using Google's Gemini models.
 
-## Model & training
-- Model: multi-label CNN (or transformer) with focal/BCELoss for class imbalance
-- Dataset: combination of public food/ingredient datasets and in-house annotated images
-- Training (example)
-  python train.py --config configs/ingredient_detector.yaml --data data/train --epochs 30 --batch-size 32
+## Running the Project Locally
 
-Include validation and augmentation (random crops, color jitter, MixUp).
+### Prerequisites
 
-## Evaluation
-- Metrics: mAP (multi-label), per-class precision/recall, recipe recommendation NDCG
-- Test command:
-  python evaluate.py --model models/ingredient_detector.pth --data data/val
+- Node.js v18+
+- Python 3.10+
+- A Google Gemini API Key
 
-## Privacy & security
-- By default images are processed in-memory and not stored. If persistent storage is enabled, notify users and follow applicable privacy laws.
-- Avoid sending sensitive images to third-party services.
+### 1. Clone the Repository
 
-## Contributing
-1. Fork the repo
-2. Create a feature branch
-3. Add tests and update README where appropriate
-4. Open a pull request with a clear description
+```bash
+git clone https://github.com/NesanduD/smart-pantry.git
+cd smart-pantry
+```
 
-## Files of interest
-- app/ (REST server, web UI)
-- models/ (pretrained weights)
-- scripts/ (inference, dataset tools)
-- train.py, evaluate.py, requirements.txt
+### 2. Backend Setup
 
-## License
-Specify project license in LICENSE file (e.g., MIT).
+Navigate to the backend directory:
 
-## Acknowledgements
-Thank dataset contributors and open-source libraries used.
+```bash
+cd backend
+```
+
+Create a Python virtual environment:
+
+```bash
+python -m venv venv
+```
+
+Activate the virtual environment.
+
+**Windows:**
+
+```bash
+venv\Scripts\activate
+```
+
+**Mac/Linux:**
+
+```bash
+source venv/bin/activate
+```
+
+Install the required dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+Create a `.env` file and add your Google Gemini API key:
+
+GOOGLE_API_KEY=your_api_key_here
+
+
+Run database migrations:
+
+```bash
+python manage.py migrate
+```
+
+Start the Django development server:
+
+```bash
+python manage.py runserver
+```
+
+The backend will run on `http://localhost:8000`.
+
+### 3. Frontend Setup
+
+Open a new terminal window:
+
+```bash
+cd frontend
+```
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Start the development server:
+
+```bash
+npm run dev
+```
+
+The frontend will run on `http://localhost:5173`.
+
+## Technical Hurdles Overcome
+
+Building SmartPantry required solving several technical challenges across the frontend, backend, and AI pipeline.
+
+One of the major challenges was configuring a strict Cross-Origin Resource Sharing (CORS) pipeline between the Vercel-hosted frontend and the Render-hosted Django API.
+
+The project also required robust asynchronous state management in React to handle the multi-step workflow of:
+
+1. Capturing an image through the device camera
+2. Sending the image to the backend
+3. Processing the image using a multimodal AI model
+4. Identifying available ingredients
+5. Generating a structured recipe
+6. Returning and rendering the generated result in the frontend
+
+Another challenge was ensuring reliable communication between the AI model and frontend. Custom prompt-engineering and JSON enforcement were implemented to ensure AI-generated responses follow a predictable structure that can be safely parsed and displayed by the application.
+
+## Environment Variables
+
+The backend requires the following environment variable:
+GOOGLE_API_KEY=your_api_key_here
+
+
+**Important:** Never commit your `.env` file or API keys to GitHub.
+
+Make sure `.env` is included in your `.gitignore` file.
+
+## Deployment
+
+### Frontend
+
+The frontend is deployed using **Vercel**.
+
+### Backend
+
+The backend is deployed using **Render**.
+
+The production architecture allows the React frontend to communicate with the Django REST API through authenticated HTTP requests.
+
+## Author
+
+Created by **Nesandu Dissaka Wedippuliarachchi**

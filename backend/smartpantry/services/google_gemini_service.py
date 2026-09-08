@@ -7,27 +7,42 @@ from PIL import Image
 # Initialize client
 client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
 
-# Use models available through the deployed Gemini API.
-MODEL_NAME = "gemini-3.6-flash"
-SUPPORTED_MODEL_NAMES = {
-    "gemini-3.6-flash",
-}
+# The default active model
+DEFAULT_MODEL = "gemini-3.6-flash"
 
+# Whitelist of models your key actually has access to
+SUPPORTED_MODELS = {
+    "gemini-3.6-flash",
+    "gemini-2.5-flash",
+    "gemma-4-31b-it",
+}
 
 def resolve_model_name(model_name):
     """Keep stale frontend model selections from reaching the API."""
-    normalized_name = str(model_name or MODEL_NAME).removeprefix("models/")
-    return normalized_name if normalized_name in SUPPORTED_MODEL_NAMES else MODEL_NAME
+    if not model_name:
+        return DEFAULT_MODEL
+        
+    normalized_name = str(model_name).strip().removeprefix("models/")
+    
+    # Map deprecated or frontend-specific names to actual active models
+    if "gemma" in normalized_name.lower():
+        return "gemma-4-31b-it"
+    if normalized_name in ["gemini-2.0-flash", "gemini-1.5-flash"]:
+        return DEFAULT_MODEL
+        
+    return normalized_name if normalized_name in SUPPORTED_MODELS else DEFAULT_MODEL
+
 
 def identify_ingredients(image_path):
     """
     Opens a local image file and identifies ingredients.
+    Always uses the default Gemini model since Gemma doesn't support vision well here.
     """
     try:
         image = Image.open(image_path)
         
         response = client.models.generate_content(
-            model=MODEL_NAME,
+            model=DEFAULT_MODEL,
             contents=[
                 "Identify all food ingredients in this image. Return ONLY a comma-separated list of items (e.g. 'tomato, onion, egg'). No other text.",
                 image
@@ -38,8 +53,12 @@ def identify_ingredients(image_path):
         print(f"!!! GEMINI ERROR !!!: {e}")
         raise e
 
-def suggest_recipes_from_ingredients(ingredients_list, model_name=MODEL_NAME):
-    model_name = resolve_model_name(model_name)
+
+def suggest_recipes_from_ingredients(ingredients_list, model_name=DEFAULT_MODEL):
+    """
+    Suggests recipes based on ingredients and ensures clean JSON output.
+    """
+    active_model = resolve_model_name(model_name)
     ingredients_string = ', '.join(ingredients_list)
     
     prompt = f"""
@@ -56,145 +75,25 @@ Step-by-Step:
 """
 
     try:
-        # 1. Prepare the config
-        # We ONLY use response_mime_type if it's NOT a Gemma model
+        # Prepare the config (JSON enforcement is for Gemini models only)
         config = None
-        if "gemma" not in model_name.lower():
+        if "gemma" not in active_model.lower():
             config = types.GenerateContentConfig(response_mime_type="application/json")
 
-        # 2. Call the API
+        # Call the API
         response = client.models.generate_content(
-            model=model_name,
+            model=active_model,
             contents=prompt,
-            config=config # This will be None for Gemma
+            config=config
         )
         
-        # 3. Clean the text (Gemma often adds ```json ... ``` blocks)
+        # Clean the text (remove markdown blocks if the model included them)
         clean_text = response.text.strip()
         if clean_text.startswith("```"):
-            # This removes ```json at the start and ``` at the end
-            clean_text = clean_text.replace("```json", "").replace("```", "").strip()
+            clean_text = clean_text.removeprefix("```json").removeprefix("```").removesuffix("```").strip()
             
         return clean_text
 
     except Exception as e:
-        print(f"!!! {model_name} ERROR !!!: {e}")
-        return "[]"
-    # If the user didn't pick one, we default to the new Gemini 3 Flash
-    prompt = f""" ... (keep your existing prompt here) ... """
-    
-    try:
-        response = client.models.generate_content(
-            model=model_name, # Use the dynamic model name!
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json"
-            )
-        )
-        return response.text.strip()
-    except Exception as e:
-        print(f"!!! {model_name} ERROR !!!: {e}")
-        return "[]"
-    # Use the current Flash model for instant responses
-    MODEL_NAME = "gemini-3.6-flash"
-    
-    ingredients_string = ', '.join(ingredients_list)
-    
-    prompt = f"""
-You are a fast-paced short-order chef. Use these ingredients: {ingredients_string}.
-Suggest 3 quick recipes. Return ONLY a JSON array.
-
-Format for "instructions":
-Ingredients:
-- [Item]
-Step-by-Step:
-1. [Action]
-
-Keys: "title", "instructions". 
-Keep steps short and direct. No preamble.
-"""
-    
-    try:
-        response = client.models.generate_content(
-            model=MODEL_NAME,
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-                temperature=0.7 # Lower temperature = faster, more focused answers
-            )
-        )
-        return response.text.strip()
-    except Exception as e:
-        print(f"!!! SPEED ERROR !!!: {e}")
-        return "[]"
-    ingredients_string = ', '.join(ingredients_list)
-    
-    prompt = f"""
-You are an expert chef. I have the following ingredients: {ingredients_string}.
-Please suggest up to 3 recipes I can make using some or all of these items. 
-You can assume I have basic staples like salt, pepper, oil, and water.
-
-IMPORTANT: You must return the response ONLY as a valid JSON array of objects. Do not include markdown formatting like ```json.
-Each object must have exactly two keys: "title" and "instructions".
-
-The "instructions" string MUST strictly follow this exact format:
-
-Ingredients:
-- [Ingredient 1]
-- [Ingredient 2]
-
-Step-by-Step:
-1. [Step 1]
-2. [Step 2]
-"""
-    
-    try:
-        # NOTICE: We removed the config=types.GenerateContentConfig(...) part below!
-        response = client.models.generate_content(
-            model=MODEL_NAME,
-            contents=prompt
-        )
-        
-        clean_text = response.text.strip()
-        if clean_text.startswith("```"):
-            clean_text = clean_text.replace("```json", "").replace("```", "").strip()
-            
-        return clean_text
-    except Exception as e:
-        print(f"!!! RECIPE ERROR !!!: {e}")
-        return "[]"
-    """
-    Suggests 3 recipes based on ingredients and ensures clean JSON output.
-    """
-    prompt = f"""
-    I have these ingredients: {', '.join(ingredients_list)}.
-    Suggest 3 recipes I can make. 
-    Return ONLY raw JSON. Do not include Markdown formatting or backticks.
-    Structure:
-    [
-        {{
-            "title": "Recipe Name",
-            "ingredients_needed": ["item1", "item2"],
-            "instructions": "Step 1..."
-        }}
-    ]
-    """
-    
-    try:
-        response = client.models.generate_content(
-            model=MODEL_NAME,
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json"
-            )
-        )
-        
-        # Clean up the response text in case the model adds markdown backticks
-        clean_text = response.text.strip()
-        if clean_text.startswith("```"):
-            clean_text = clean_text.replace("```json", "").replace("```", "").strip()
-            
-        return clean_text
-    except Exception as e:
-        print(f"!!! RECIPE ERROR !!!: {e}")
+        print(f"!!! {active_model} ERROR !!!: {e}")
         return "[]"

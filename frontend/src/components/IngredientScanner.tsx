@@ -113,16 +113,23 @@ const IngredientScanner = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto bg-white p-6 md:p-8 rounded-lg shadow-md mt-6 md:mt-10">
-      <h2 className="text-3xl font-bold text-center mb-6 text-gray-800">📸 AI Kitchen Scanner</h2>
+    <div className="fade-up py-3 md:py-7">
+      <div className="mb-8 flex flex-col justify-between gap-5 md:flex-row md:items-end">
+        <div>
+          <p className="mb-2 text-sm font-bold uppercase tracking-[0.18em] text-[#66832b]">Ingredient intelligence</p>
+          <h2 className="display-font text-5xl leading-none text-[#18231f]">What’s on the counter?</h2>
+          <p className="mt-3 max-w-xl text-slate-600">Take a photo and turn what you already have into your next three meals.</p>
+        </div>
+        <div className="rounded-full border border-[#cbdba7] bg-[#edf5df] px-4 py-2 text-sm font-semibold text-[#66832b]">● AI kitchen scanner</div>
+      </div>
       
-      {/* Model Selection Dropdown */}
-      <div className="mb-6 max-w-md mx-auto">
-        <label className="block text-sm font-bold text-gray-700 mb-2">Select AI Model for Recipes:</label>
+      <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_18px_55px_rgba(24,35,31,0.08)] md:p-8">
+      <div className="mb-7 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+        <label className="text-sm font-bold text-slate-700">Recipe brain</label>
         <select 
           value={selectedModel}
           onChange={(e) => setSelectedModel(e.target.value)}
-          className="w-full p-2 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-500"
+          className="rounded-xl border border-slate-200 bg-[#f7f8f3] px-4 py-2.5 text-sm font-semibold text-slate-700 outline-none focus:border-[#8aaa3d] focus:ring-4 focus:ring-[#d9f36a]/40 md:min-w-64"
         >
           <option value="gemini-2.0-flash">Gemini 2.0 Flash (Fastest)</option>
           <option value="gemma-2b-it">Gemma 2B (Local/Open Source)</option>
@@ -133,16 +140,16 @@ const IngredientScanner = () => {
         
         {/* Input Options: Camera or File */}
         {!isCameraActive && !preview && (
-          <div className="flex flex-col md:flex-row gap-4 w-full max-w-md justify-center">
+          <div className="grid w-full max-w-2xl gap-4 md:grid-cols-2">
             <button 
               onClick={startCamera}
-              className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-bold shadow transition flex-1"
+              className="rounded-2xl bg-[#18231f] px-6 py-5 text-left font-bold text-white shadow-[5px_5px_0_#d9f36a] transition hover:-translate-y-1"
             >
               📷 Open Desktop/Phone Camera
             </button>
             
-            <label className="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg font-bold shadow transition cursor-pointer text-center flex-1">
-              📁 Upload File
+            <label className="cursor-pointer rounded-2xl border-2 border-dashed border-[#b7c887] bg-[#f5f8ed] px-6 py-5 text-center font-bold text-[#50651f] transition hover:border-[#8aaa3d] hover:bg-[#edf5df]">
+              Upload a photo
               <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
             </label>
           </div>
@@ -154,11 +161,11 @@ const IngredientScanner = () => {
             ref={videoRef} 
             playsInline 
             muted
-            className="w-full rounded-lg shadow-sm border-2 border-gray-300 bg-black"
+            className="w-full rounded-2xl border-2 border-[#18231f] bg-black shadow-lg"
           ></video>
           <button 
             onClick={takePicture}
-            className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-white text-blue-600 px-8 py-3 rounded-full font-bold shadow-xl border-4 border-blue-500 hover:scale-105 transition"
+            className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full border-4 border-[#d9f36a] bg-white px-8 py-3 font-bold text-[#18231f] shadow-xl transition hover:scale-105"
           >
             📸 Capture
           </button>
@@ -169,15 +176,15 @@ const IngredientScanner = () => {
         {/* Image Preview */}
         {preview && (
           <div className="flex flex-col items-center gap-4 w-full max-w-md">
-            <img src={preview} alt="Captured" className="w-full rounded-xl shadow-md border-2 border-gray-200 object-cover" />
+            <img src={preview} alt="Captured" className="w-full rounded-2xl border-2 border-slate-200 object-cover shadow-md" />
             <div className="flex gap-4">
               <button 
                 onClick={() => { setPreview(null); startCamera(); }}
-                className="text-sm font-semibold text-blue-600 hover:underline"
+                className="text-sm font-bold text-[#66832b] hover:text-[#18231f]"
               >
                 Retake Photo
               </button>
-              <label className="text-sm font-semibold text-gray-600 hover:underline cursor-pointer">
+              <label className="cursor-pointer text-sm font-bold text-slate-500 hover:text-[#18231f]">
                 Choose Different File
                 <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
               </label>
@@ -189,8 +196,8 @@ const IngredientScanner = () => {
         <button 
           onClick={handleScan} 
           disabled={loading || !image}
-          className={`px-8 py-4 rounded-xl text-white font-extrabold text-lg transition w-full max-w-md mt-2 ${
-            loading || !image ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600 shadow-lg'
+          className={`mt-2 w-full max-w-md rounded-xl px-8 py-4 text-lg font-extrabold text-white transition ${
+            loading || !image ? 'cursor-not-allowed bg-slate-300' : 'bg-[#e25345] shadow-[4px_4px_0_#b92e2a] hover:-translate-y-0.5'
           }`}
         >
           {loading ? '🧠 AI is Thinking...' : 'Get Recipes'}
@@ -199,27 +206,28 @@ const IngredientScanner = () => {
 
       {/* Results Section */}
       {results && (
-        <div className="mt-12 border-t pt-8">
-          <h3 className="text-xl font-bold mb-3">Detected Ingredients:</h3>
-          <div className="flex flex-wrap gap-2 mb-8 bg-green-50 p-4 rounded-lg border border-green-200">
+        <div className="mt-12 border-t border-slate-200 pt-8">
+          <h3 className="display-font mb-3 text-3xl text-[#18231f]">Found in your photo</h3>
+          <div className="mb-8 flex flex-wrap gap-2 rounded-2xl border border-[#cbdba7] bg-[#f2f8e7] p-4">
             {results.detected_ingredients?.map((item, idx) => (
-              <span key={idx} className="bg-green-200 text-green-900 px-3 py-1 rounded-full text-sm font-bold capitalize">
+              <span key={idx} className="rounded-full bg-[#d9f36a] px-3 py-1 text-sm font-bold capitalize text-[#354512]">
                 {item}
               </span>
             ))}
           </div>
           
-          <h3 className="text-2xl font-bold mb-6">🍽️ Recipes using {selectedModel}</h3>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <h3 className="display-font mb-6 text-3xl text-[#18231f]">Your next meals</h3>
+          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
             {results.suggested_recipes?.map((recipe, idx) => (
-              <div key={idx} className="bg-white border rounded-xl shadow-sm p-6">
-                <h4 className="font-bold text-lg mb-4 text-gray-800 border-b pb-2">{recipe.title}</h4>
-                <p className="text-gray-600 text-sm whitespace-pre-line">{recipe.instructions}</p>
+              <div key={idx} className="rounded-2xl border border-slate-200 bg-[#fffdf8] p-6 shadow-sm">
+                <h4 className="mb-4 border-b border-slate-200 pb-3 text-lg font-bold text-[#18231f]">{recipe.title}</h4>
+                <p className="whitespace-pre-line text-sm leading-6 text-slate-600">{recipe.instructions}</p>
               </div>
             ))}
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 };

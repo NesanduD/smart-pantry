@@ -7,8 +7,8 @@ from PIL import Image
 # Initialize client
 client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
 
-# Use one of the IDs confirmed by your check_models script
-MODEL_NAME = "gemma-3-12b-it" 
+# Use a multimodal model available through the deployed Gemini API.
+MODEL_NAME = "gemini-2.0-flash"
 
 def identify_ingredients(image_path):
     """
@@ -29,7 +29,7 @@ def identify_ingredients(image_path):
         print(f"!!! GEMINI ERROR !!!: {e}")
         raise e
 
-def suggest_recipes_from_ingredients(ingredients_list, model_name="gemini-3-flash-preview"):
+def suggest_recipes_from_ingredients(ingredients_list, model_name="gemini-2.0-flash"):
     ingredients_string = ', '.join(ingredients_list)
     
     prompt = f"""

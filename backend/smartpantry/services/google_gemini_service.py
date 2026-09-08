@@ -7,8 +7,18 @@ from PIL import Image
 # Initialize client
 client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
 
-# Use a multimodal model available through the deployed Gemini API.
+# Use models available through the deployed Gemini API.
 MODEL_NAME = "gemini-2.0-flash"
+SUPPORTED_MODEL_NAMES = {
+    "gemini-2.0-flash",
+    "gemini-2.5-flash",
+}
+
+
+def resolve_model_name(model_name):
+    """Keep stale frontend model selections from reaching the API."""
+    normalized_name = str(model_name or MODEL_NAME).removeprefix("models/")
+    return normalized_name if normalized_name in SUPPORTED_MODEL_NAMES else MODEL_NAME
 
 def identify_ingredients(image_path):
     """
@@ -30,6 +40,7 @@ def identify_ingredients(image_path):
         raise e
 
 def suggest_recipes_from_ingredients(ingredients_list, model_name="gemini-2.0-flash"):
+    model_name = resolve_model_name(model_name)
     ingredients_string = ', '.join(ingredients_list)
     
     prompt = f"""
